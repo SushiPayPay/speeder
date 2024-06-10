@@ -11,7 +11,7 @@ Speeder uses RayTrain to do distributed data parallelism to train models on mult
 ```
 conda env create -y -n speeder -f env.yaml
 poetry install
-python train.py
+python speeder/train.py
 ```
 
 You can modify hyperparameters in `configs/train_cfg.yaml`
