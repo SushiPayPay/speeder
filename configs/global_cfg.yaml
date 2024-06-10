@@ -1,0 +1,12 @@
+defaults:
+  - _self_
+
+data_path: /home/data/huggingface
+wandb_team: bigml_sam
+
+user: ${oc.env:USER,unnamed}
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null

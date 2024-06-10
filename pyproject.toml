@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "parallel"
+name = "speeder"
 version = "0.1.0"
 description = ""
 authors = ["Paymon Haddad"]
 license = ""
 readme = "README.md"
-packages = [{include = "template"}]
+packages = [{include = "speeder"}]
 
 
 [tool.poetry.dependencies]
@@ -28,6 +28,7 @@ matplotlib = "*"
 seaborn = "*"
 hydra-core = "*"
 python-dotenv = "*"
+datasets = "*"
 
 [build-system]
 requires = ["poetry-core"]
