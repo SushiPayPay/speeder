@@ -2,20 +2,25 @@ defaults:
   - global_cfg@_here_
   - _self_
 
+exp_name: null # required
+run_name: null # required
+
+debug: false
+
 # RAY PARAMS
 
 global_batch_size: 1024
 prefetch_batches: 2
 
-num_data_workers: 4
-cpus_per_data_worker: 1
+data_workers: 4
+cpus_per_data_worker: 2
 gpus_per_data_worker: 0
 
-num_train_workers: 8
-cpus_per_train_worker: 2
+train_workers: 4
+cpus_per_train_worker: 1
 gpus_per_train_worker: 1
 
-use_gpu: True
+gpus: -1
 
 # TRAINING PARAMS
 

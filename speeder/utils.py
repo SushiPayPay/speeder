@@ -1,8 +1,8 @@
 from copy import deepcopy
+import os
 import random
 import numpy as np
 import torch
-import ray
 
 class DotDict(dict):
     def __getitem__(self, item):
@@ -17,6 +17,12 @@ class DotDict(dict):
 
     def __deepcopy__(self, memo):
         return DotDict(deepcopy(dict(self), memo))
+
+    def __getstate__(self):
+        return self.__dict__.copy()
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
     
 sty = DotDict({
         'BLUE': '\033[0;34m',
@@ -35,4 +41,17 @@ def set_seeds(seed):
     torch.backends.cudnn.deterministic = True 
     torch.backends.cudnn.benchmark = False 
     torch.manual_seed(seed)
-    ray.train.torch.enable_reproducibility()
+
+def set_gpus(ids):
+    '''Takes in a list of integers or a single integer representing GPU IDs to expose to the python process
+    Passing -1 will expose all available GPUs
+    '''
+    gpus = []
+    if isinstance(ids, int):
+        gpus = [str(i) for i in range(torch.cuda.device_count())] if ids == -1 else [ids]
+    elif isinstance(ids, list):
+        gpus = [str(i) for i in ids]
+    else:
+        raise ValueError("<ids> must be of type int or List[int]")
+    os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(gpus)
+    return gpus
