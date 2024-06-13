@@ -14,7 +14,7 @@ def get_global_datasets(cfg):
     '''Returns train and val ray dataset objects
     '''
     
-    ray.init(ignore_reinit_error=True)
+    ray.init(ignore_reinit_error=True, dashboard_host='0.0.0.0')
 
     map_cfg = {
         'concurrency': cfg.data_workers,

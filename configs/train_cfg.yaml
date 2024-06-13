@@ -2,6 +2,10 @@ defaults:
   - global_cfg@_here_
   - _self_
 
+# CONFIG PARAMS
+
+overrides: null
+
 exp_name: null # required
 run_name: null # required
 
@@ -9,7 +13,6 @@ debug: false
 
 # RAY PARAMS
 
-global_batch_size: 1024
 prefetch_batches: 2
 
 data_workers: 4
@@ -20,9 +23,18 @@ train_workers: 4
 cpus_per_train_worker: 1
 gpus_per_train_worker: 1
 
-gpus: -1
+gpu_ids: -1
+
+# MODEL PARAMS
+
+# DATA PARAMS
+
+global_batch_size: 1024
 
 # TRAINING PARAMS
 
+# Pass either a ray tune entry or just pass the parameter as normal
+# List of supported entries: https://docs.ray.io/en/latest/tune/api/search_space.html
+
 epochs: 10
-lr: 0.001
+lr: 0.01

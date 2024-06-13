@@ -47,11 +47,12 @@ def set_gpus(ids):
     Passing -1 will expose all available GPUs
     '''
     gpus = []
-    if isinstance(ids, int):
-        gpus = [str(i) for i in range(torch.cuda.device_count())] if ids == -1 else [ids]
-    elif isinstance(ids, list):
-        gpus = [str(i) for i in ids]
-    else:
-        raise ValueError("<ids> must be of type int or List[int]")
+    try:
+        if isinstance(ids, int):
+            gpus = [str(i) for i in range(torch.cuda.device_count())] if ids == -1 else [str(ids)]
+        else:
+            gpus = [str(i) for i in ids]
+    except:
+        raise ValueError("<ids> must be an int or container of ints")
     os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(gpus)
     return gpus

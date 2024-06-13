@@ -1,8 +1,6 @@
 import torch
 
-from omegaconf import OmegaConf
-
-from ray.train import get_dataset_shard
+from ray.train import get_dataset_shard, report
 from ray.train.torch import enable_reproducibility, prepare_model
 
 from speeder.utils import *
@@ -10,7 +8,6 @@ from speeder.models import *
 
 def train_loop_per_worker(cfg):
     cfg = DotDict(cfg)
-    print(cfg)
     set_seeds(0)
     enable_reproducibility()
 
@@ -34,3 +31,5 @@ def train_loop_per_worker(cfg):
         model.train()
         for batch in ds_train_shard.iter_torch_batches(**loader_cfg):
             print(batch)
+
+        report({'loss': 5})

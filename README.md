@@ -14,4 +14,10 @@ poetry install
 python speeder/train.py
 ```
 
-You can modify hyperparameters in `configs/train_cfg.yaml`
+You can modify parameters directly in `configs/train_cfg.yaml`
+
+For launching runs, you can specify a parameter override path to override select defaults like so:
+```
+python speeder/train.py overrides=<path_to_your_overrides_yaml>
+```
+See the `overrides` directory for examples
