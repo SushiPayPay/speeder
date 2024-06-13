@@ -10,5 +10,3 @@ gpus_per_train_worker: 1
 gpu_ids: -1
 
 lr: tune.uniform(0,1)
-
-# 2 min 52 sec total w/ 8 gpus

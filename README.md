@@ -6,6 +6,9 @@ Speeder uses RayData to do distributed data preprocessing on the CPU at training
 ## Distributed Data Parallelism (DDP)
 Speeder uses RayTrain to do distributed data parallelism to train models on multiple GPUs at once
 
+## Fast Hyperparameter Tuning
+Speeder uses RayTune to do intelligent hyperparameter sweeps in parallel
+
 # Quickstart
 
 ```

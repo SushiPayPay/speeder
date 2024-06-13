@@ -59,9 +59,10 @@ def main(cfg):
 
     ds = get_global_datasets(cfg)
 
-    # A scaling config applies to a SINGLE trainable.
-    # Each tune trial uses its own trainable, so the less
-    # resources per trainable means MORE trials in parallel.
+    # Each tune trial will consume this many resources!
+    # If you want multiple trials to run in parallel, you want
+    # to allocate LESS resources to each trial to allow more
+    # to run at once.
     scaling_cfg = ScalingConfig(
         num_workers=cfg.train_workers,
         use_gpu=use_gpu,
