@@ -1,6 +1,7 @@
 import os
 from time import time
 from dotenv import load_dotenv
+import shutil
 
 import hydra
 from omegaconf import OmegaConf
@@ -21,23 +22,22 @@ def main(cfg):
     # Environment organization
 
     load_dotenv()
-
     os.remove(f'{os.path.splitext(os.path.basename(__file__))[0]}.log')
     os.umask(0)
-
     set_seeds(0)
 
     if cfg.overrides: cfg = OmegaConf.merge(cfg, OmegaConf.load(cfg.overrides))
-    cfg = DotDict(cfg)
 
     use_gpu = len(set_gpus(cfg.gpu_ids)) > 0
 
     assert cfg.exp_name and cfg.run_name, 'Must specify experiment and run name!'
 
     exp_name = f'exp-{cfg.exp_name}' if not cfg.debug else 'exp-debug'
-    
-    run_id = int(time())
-    run_name = f'{run_id}-run-{cfg.run_name}'
+    run_name = f'run-{cfg.run_name}-{int(time())}'
+
+    output_path = os.path.join(cfg.runs_path, exp_name, run_name)
+    os.makedirs(output_path, exist_ok=True)
+    OmegaConf.save(cfg, os.path.join(output_path, 'run_cfg.yaml'))
 
     wandb_api_key = os.getenv('WANDB_API_KEY', None)
     callbacks = [WandbLoggerCallback(
@@ -83,15 +83,15 @@ def main(cfg):
         mode='min',
         search_alg=None, # TODO
         scheduler=None, # TODO
-        num_samples=8, # TODO
+        num_samples=cfg.num_trials,
         reuse_actors=True,
-        trial_name_creator=None, # TODO
-        trial_dirname_creator=None, # TODO
+        trial_name_creator=(lambda t: f'trial-{t.experiment_tag}'),
+        trial_dirname_creator=(lambda t: f'trial-{t.experiment_tag}')
     )
 
     run_cfg = RunConfig(
         name=run_name,
-        storage_path=cfg.runs_path,
+        storage_path=os.path.join(cfg.runs_path, exp_name),
         failure_config=None,
         checkpoint_config=None,
         stop=None,
@@ -111,7 +111,7 @@ def main(cfg):
         tune_config=tune_cfg,
         run_config=run_cfg,
     )
-    
+
     tuner.fit()
 
 if __name__ == '__main__':

@@ -3,11 +3,14 @@ import torch
 from ray.train import get_dataset_shard, report
 from ray.train.torch import enable_reproducibility, prepare_model
 
+from omegaconf import OmegaConf
+
 from speeder.utils import *
 from speeder.models import *
 
 def train_loop_per_worker(cfg):
-    cfg = DotDict(cfg)
+    # cfg = DotDict(cfg)
+    cfg = OmegaConf.create(cfg)
     set_seeds(0)
     enable_reproducibility()
 

@@ -24,3 +24,12 @@ For launching runs, you can specify a parameter override path to override select
 python speeder/train.py overrides=<path_to_your_overrides_yaml>
 ```
 See the `overrides` directory for examples
+
+# WandB
+
+1. Make a `.env` from `.env.template` and add your WandB API key
+
+2. Group by `group` and `job_type` in the WandB dashboard to properly organize
+    - The organization hierarchy is `experiment` -> `run` -> `trial`
+
+![](figures/wandb_structure.png)

@@ -13,13 +13,13 @@ debug: false
 
 # RAY PARAMS
 
-prefetch_batches: 2
+prefetch_batches: 1
 
-data_workers: 4
-cpus_per_data_worker: 2
+data_workers: 1
+cpus_per_data_worker: 1
 gpus_per_data_worker: 0
 
-train_workers: 4
+train_workers: 1
 cpus_per_train_worker: 1
 gpus_per_train_worker: 1
 
@@ -36,5 +36,8 @@ global_batch_size: 1024
 # Pass either a ray tune entry or just pass the parameter as normal
 # List of supported entries: https://docs.ray.io/en/latest/tune/api/search_space.html
 
+num_trials: 1 # Actual number of trials is num_trials * len(grid_search_params)
+
 epochs: 10
 lr: 0.01
+pr: 0.1
