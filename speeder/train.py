@@ -27,6 +27,7 @@ def main(cfg):
     set_seeds(0)
 
     if cfg.overrides: cfg = OmegaConf.merge(cfg, OmegaConf.load(cfg.overrides))
+    cfg = DotDict(cfg)
 
     use_gpu = len(set_gpus(cfg.gpu_ids)) > 0
 
@@ -37,7 +38,7 @@ def main(cfg):
 
     output_path = os.path.join(cfg.runs_path, exp_name, run_name)
     os.makedirs(output_path, exist_ok=True)
-    OmegaConf.save(cfg, os.path.join(output_path, 'run_cfg.yaml'))
+    OmegaConf.save(dict(cfg), os.path.join(output_path, 'run_cfg.yaml'))
 
     wandb_api_key = os.getenv('WANDB_API_KEY', None)
     callbacks = [WandbLoggerCallback(
