@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision import models
 
 class Net(nn.Module):
     def __init__(self):
@@ -21,4 +22,13 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
-net = Net()
+class RN50(nn.Module):
+    def __init__(self, num_classes=200):
+        super(RN50, self).__init__()
+        self.model = models.resnet50(pretrained=False)
+        self.model.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
+        num_features = self.model.fc.in_features
+        self.model.fc = nn.Linear(num_features, num_classes)
+        
+    def forward(self, x):
+        return self.model(x)

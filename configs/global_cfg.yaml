@@ -5,7 +5,7 @@ data_path: /home/data/huggingface
 runs_path: /home/data/speeder
 
 team_name: bigml_sam # optional wandb team name
-project_name: parallel-test-2 # required wandb project name
+project_name: parallel-test-3 # required wandb project name
 
 user: ${oc.env:USER,unnamed}
 

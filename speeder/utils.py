@@ -56,3 +56,10 @@ def set_gpus(ids):
         raise ValueError("<ids> must be an int or container of ints")
     os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(gpus)
     return gpus
+
+def p(*args, **kwargs):
+    '''Identical to python print but red
+    '''
+    sep = kwargs.pop('sep', ' ')
+    end = kwargs.pop('end', '\n')
+    print(sty.RED + sep.join(map(str, args)) + sty.RESET, sep=sep, end=end, **kwargs)

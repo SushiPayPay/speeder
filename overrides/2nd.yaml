@@ -1,0 +1,15 @@
+exp_name: test
+run_name: test
+
+batch_size: 2048
+
+gpu_ids: 3
+
+# lr: tune.uniform(0,1)
+# pr: tune.grid_search([1,2,3])
+
+train_workers: 1
+cpus_per_train_worker: 1
+gpus_per_train_worker: 1
+
+debug: True

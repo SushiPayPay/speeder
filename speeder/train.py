@@ -13,7 +13,6 @@ from ray.train.torch import TorchTrainer
 from ray.air.integrations.wandb import WandbLoggerCallback
 
 from speeder.utils import *
-from speeder.models import *
 from speeder.data_utils import *
 from speeder.train_utils import *
 

@@ -41,18 +41,18 @@ def get_global_datasets(cfg):
         .map(do_transforms, **map_cfg)
     )
 
-    print(f'{sty.RED}DS_TRAIN INFO:{sty.RESET}')
-    print(ds_train.count())
-    print(ds_train.schema())
+    p('DS_TRAIN INFO')
+    p(ds_train.count())
+    p(ds_train.schema())
 
     ds_val = (
         ray.data.from_huggingface(ds['valid'])
         .map(do_transforms, **map_cfg)
     )
 
-    print(f'{sty.RED}DS_VAL INFO:{sty.RESET}')
-    print(ds_val.count())
-    print(ds_val.schema())
+    p(f'DS_VAL INFO:')
+    p(ds_val.count())
+    p(ds_val.schema())
 
     ds = {
         'train': ds_train,

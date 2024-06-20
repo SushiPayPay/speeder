@@ -1,9 +1,0 @@
-exp_name: test
-run_name: test
-
-global_batch_size: 16384
-
-gpu_ids: [2,3,4,5,6,7]
-
-lr: tune.uniform(0,1)
-pr: tune.grid_search([1,2,3])
