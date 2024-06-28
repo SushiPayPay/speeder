@@ -35,6 +35,22 @@ sty = DotDict({
         'RESET': '\033[0m'
         })
 
+def color_print(color, *args, **kwargs):
+    '''Helper function for colored print
+    '''
+    sep = kwargs.pop('sep', ' ')
+    end = kwargs.pop('end', '\n')
+    text = sep.join(map(str, args))
+    lines = text.split('\n')
+    colored_lines = [color + line + sty.RESET for line in lines]
+    print('\n'.join(colored_lines), sep=sep, end=end, **kwargs)
+
+def pb(*args, **kwargs): color_print(sty.BLUE, *args, **kwargs)
+def pc(*args, **kwargs): color_print(sty.CYAN, *args, **kwargs)
+def pr(*args, **kwargs): color_print(sty.RED, *args, **kwargs)
+def pp(*args, **kwargs): color_print(sty.PINK, *args, **kwargs)
+def pg(*args, **kwargs): color_print(sty.GREEN, *args, **kwargs)
+
 def set_seeds(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -56,10 +72,3 @@ def set_gpus(ids):
         raise ValueError("<ids> must be an int or container of ints")
     os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(gpus)
     return gpus
-
-def p(*args, **kwargs):
-    '''Identical to python print but red
-    '''
-    sep = kwargs.pop('sep', ' ')
-    end = kwargs.pop('end', '\n')
-    print(sty.RED + sep.join(map(str, args)) + sty.RESET, sep=sep, end=end, **kwargs)

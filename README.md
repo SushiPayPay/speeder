@@ -13,7 +13,7 @@ Speeder uses RayTune to do intelligent hyperparameter sweeps in parallel
 
 ```
 conda env create -y -n speeder -f env.yaml
-poetry install
+conda activate speeder
 python speeder/train.py
 ```
 
@@ -32,4 +32,4 @@ See the `overrides` directory for examples
 2. Group by `group` and `job_type` in the WandB dashboard to properly organize
     - The organization hierarchy is `experiment` -> `run` -> `trial`
 
-![](figures/wandb_structure.png)
+![](assets/wandb_structure.png)
