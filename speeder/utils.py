@@ -23,33 +23,43 @@ class DotDict(dict):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-    
-sty = DotDict({
-        'BLUE': '\033[0;34m',
-        'CYAN': '\033[0;36m',
-        'RED': '\033[0;31m',
-        'PINK': '\033[0;35m',
-        'GREEN': '\033[0;32m',
-        'BOLD': '\033[1m',
-        'ITALIC': '\033[3m',
-        'RESET': '\033[0m'
-        })
 
-def color_print(color, *args, **kwargs):
-    '''Helper function for colored print
-    '''
-    sep = kwargs.pop('sep', ' ')
-    end = kwargs.pop('end', '\n')
-    text = sep.join(map(str, args))
-    lines = text.split('\n')
-    colored_lines = [color + line + sty.RESET for line in lines]
-    print('\n'.join(colored_lines), sep=sep, end=end, **kwargs)
+class sty:
+    BLUE = '\033[0;34m'
+    CYAN = '\033[0;36m'
+    RED = '\033[0;31m'
+    PINK = '\033[0;35m'
+    GREEN = '\033[0;32m'
+    YELLOW = '\033[0;33m'
+    BOLD = '\033[1m'
+    ITALIC = '\033[3m'
+    RESET = '\033[0m'
 
-def pb(*args, **kwargs): color_print(sty.BLUE, *args, **kwargs)
-def pc(*args, **kwargs): color_print(sty.CYAN, *args, **kwargs)
-def pr(*args, **kwargs): color_print(sty.RED, *args, **kwargs)
-def pp(*args, **kwargs): color_print(sty.PINK, *args, **kwargs)
-def pg(*args, **kwargs): color_print(sty.GREEN, *args, **kwargs)
+    BG_RED = '\033[0;41m'
+    BG_GREEN = '\033[0;42m'
+    BG_YELLOW = '\033[0;43m'
+    BG_BLUE = '\033[0;44m'
+    BG_MAGENTA = '\033[0;45m'
+    BG_CYAN = '\033[0;46m'
+    BG_WHITE = '\033[0;47m'
+    BG_GREY = "\033[0;100m"
+
+def color_print(*args, color=sty.RESET, **kwargs):
+    print(color, end='')
+    print(*args, **kwargs, end='')
+    print(sty.RESET)
+
+def pl(*args, prefix='[INFO]', **kwargs):
+    print(f'{sty.BG_GREY}{prefix}', end=' ')
+    print(*args, **kwargs, end='')
+    print(sty.RESET)
+
+def pb(*args, **kwargs): color_print(*args, color=sty.BLUE, **kwargs)
+def pc(*args, **kwargs): color_print(*args, color=sty.CYAN, **kwargs)
+def pr(*args, **kwargs): color_print(*args, color=sty.RED, **kwargs)
+def pp(*args, **kwargs): color_print(*args, color=sty.PINK, **kwargs)
+def pg(*args, **kwargs): color_print(*args, color=sty.GREEN, **kwargs)
+def py(*args, **kwargs): color_print(*args, color=sty.YELLOW, **kwargs)
 
 def set_seeds(seed):
     random.seed(seed)

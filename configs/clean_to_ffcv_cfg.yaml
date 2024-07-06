@@ -1,0 +1,12 @@
+defaults:
+  - global_cfg@_here_
+  - _self_
+
+input_dir: '/data/clean/imagenet'
+output_dir: '/data/clean/imagenet-ffcv'
+
+write_mode: jpg # [raw, jpg]
+jpeg_quality: 90
+
+num_workers: 40
+chunk_size: 400

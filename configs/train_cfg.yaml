@@ -4,8 +4,6 @@ defaults:
 
 # CONFIG PARAMS
 
-overrides: null
-
 exp_name: null # required
 run_name: null # required
 

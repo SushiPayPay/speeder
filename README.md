@@ -14,6 +14,7 @@ Speeder uses RayTune to do intelligent hyperparameter sweeps in parallel
 ```
 conda env create -y -n speeder -f env.yaml
 conda activate speeder
+pip install ffcv --no-cache-dir
 python speeder/train.py
 ```
 
