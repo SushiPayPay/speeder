@@ -20,8 +20,9 @@ from speeder.train_utils import *
 def main(cfg):
     # Environment organization
 
-    load_dotenv()
     os.remove(f'{os.path.splitext(os.path.basename(__file__))[0]}.log')
+    load_dotenv()
+
     os.umask(0)
     set_seeds(0)
 

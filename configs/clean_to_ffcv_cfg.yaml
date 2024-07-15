@@ -2,10 +2,10 @@ defaults:
   - global_cfg@_here_
   - _self_
 
-input_dir: '/data/clean/imagenet'
-output_dir: '/data/clean/imagenet-ffcv'
+input_dir: '/data/clean/cifar100'
+output_dir: '/data/clean/cifar100-ffcv'
 
-write_mode: jpg # [raw, jpg]
+write_mode: raw # [raw, jpg]
 jpeg_quality: 90
 
 num_workers: 40

@@ -1,0 +1,8 @@
+defaults:
+  - global_cfg@_here_
+  - _self_
+
+input_dir: './data'
+output_dir: '/data/clean/cifar100'
+
+num_workers: 40
