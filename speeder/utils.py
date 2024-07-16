@@ -3,6 +3,7 @@ import os
 import random
 import numpy as np
 import torch
+import lightning as L
 
 class DotDict(dict):
     def __getitem__(self, item):
@@ -67,6 +68,7 @@ def set_seeds(seed):
     torch.backends.cudnn.deterministic = True 
     torch.backends.cudnn.benchmark = False 
     torch.manual_seed(seed)
+    L.seed_everything(seed)
 
 def set_gpus(ids):
     '''Takes in a list of integers or a single integer representing GPU IDs to expose to the python process
@@ -80,5 +82,8 @@ def set_gpus(ids):
             gpus = [str(i) for i in ids]
     except:
         raise ValueError("<ids> must be an int or container of ints")
+
     os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(gpus)
+    gpus = [int(gpu) for gpu in gpus]
+
     return gpus

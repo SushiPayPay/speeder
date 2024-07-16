@@ -10,52 +10,74 @@ from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 import torchvision
 
-from ffcv.fields import IntField, RGBImageField
-from ffcv.fields.decoders import IntDecoder, SimpleRGBImageDecoder
+from ffcv.fields.decoders import IntDecoder
 from ffcv.loader import Loader, OrderOption
-from ffcv.pipeline.operation import Operation
-from ffcv.transforms import RandomHorizontalFlip, Cutout, \
-    RandomTranslate, Convert, ToDevice, ToTensor, ToTorchImage
-from ffcv.transforms.common import Squeeze
-from ffcv.writer import DatasetWriter
+from ffcv.fields.rgb_image import \
+    CenterCropRGBImageDecoder, \
+    RandomResizedCropRGBImageDecoder
+from ffcv.transforms import \
+    RandomHorizontalFlip, \
+    ToDevice, \
+    ToTensor, \
+    ToTorchImage, \
+    Squeeze, \
+    Convert
 
 from speeder.models import *
+from speeder.utils import *
 
-DEVICE = 'cuda:0'
+PATH = '/data/clean/tiny-imagenet-ffcv'
+DEVICE = 'cuda:1'
 
-paths = {
-    'train': '/data/ffcv/cifar10/train.beton',
-    'test': '/data/ffcv/cifar10/test.beton'
-}
-
-
-CIFAR_MEAN = [125.307, 122.961, 113.8575]
-CIFAR_STD = [51.5865, 50.847, 51.255]
-loaders = {}
+IMAGENET_MEAN = [0.485, 0.456, 0.406]
+IMAGENET_STD = [0.229, 0.224, 0.225]
+DEFAULT_CROP_RATIO = 224/256
 
 def get_dataloaders():
+    loaders = {}
     for name in ['train', 'test']:
-        label_pipeline = [IntDecoder(), ToTensor(), ToDevice(torch.device('cuda:0')), Squeeze()]
-        image_pipeline = [SimpleRGBImageDecoder()]
+        image_pipeline = []
         if name == 'train':
-            image_pipeline.extend([
+            image_pipeline += [
+                RandomResizedCropRGBImageDecoder((224, 224)),
                 RandomHorizontalFlip(),
-                RandomTranslate(padding=2, fill=tuple(map(int, CIFAR_MEAN))),
-                Cutout(4, tuple(map(int, CIFAR_MEAN))),
-            ])
-        image_pipeline.extend([
+            ]
+        else:
+            image_pipeline += [
+                CenterCropRGBImageDecoder((224, 224), ratio=DEFAULT_CROP_RATIO),
+            ]
+
+        image_pipeline += [
             ToTensor(),
             ToDevice(torch.device(DEVICE), non_blocking=True),
             ToTorchImage(),
             Convert(torch.float16),
-            torchvision.transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
-        ])
-        
-        ordering = OrderOption.RANDOM if name == 'train' else OrderOption.SEQUENTIAL
+            torchvision.transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
+        ]
 
-        loaders[name] = Loader(paths[name], batch_size=64, num_workers=8,
-                                order=ordering, drop_last=(name == 'train'),
-                                pipelines={'image': image_pipeline, 'label': label_pipeline})
+        label_pipeline = [
+            IntDecoder(),
+            ToTensor(),
+            Squeeze(),
+            ToDevice(torch.device(DEVICE), non_blocking=True),
+        ]
+
+        batch_size = 512
+        num_workers = 8
+        order = OrderOption.RANDOM if name == 'train' else OrderOption.SEQUENTIAL
+
+        loaders[name] = Loader(
+            os.path.join(PATH, f'{name}.beton'),
+            batch_size=batch_size,
+            num_workers=num_workers,
+            order=order,
+            drop_last=(name == 'train'),
+            pipelines={
+                'image': image_pipeline,
+                'label': label_pipeline
+            }
+        )
+        
     return loaders
 
 def train(model, loaders):
@@ -93,7 +115,7 @@ if __name__ == "__main__":
     s = int(time())
 
     loaders = get_dataloaders()
-    model = RN50(num_classes=10).to(torch.device(DEVICE))
+    model = RN50(num_classes=200).to(torch.device(DEVICE))
 
     train(model, loaders)
 

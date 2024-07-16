@@ -15,27 +15,62 @@ from torch.optim import SGD, lr_scheduler
 import torchvision
 
 from speeder.models import *
+from speeder.utils import *
 
-DEVICE = 'cuda:1'
+PATH = '/data/clean/tiny-imagenet'
+DEVICE = 'cuda:0'
+
+IMAGENET_MEAN = [0.485, 0.456, 0.406]
+IMAGENET_STD = [0.229, 0.224, 0.225]
+
+'''
+CIFAR10:
+    train: randomhorizontalflip
 
 CIFAR_MEAN = [125.307, 122.961, 113.8575]
 CIFAR_STD = [51.5865, 50.847, 51.255]
-loaders = {}
+'''
 
 def get_dataloaders():
+    loaders = {}
     for name in ['train', 'test']:
-        transform = transforms.Compose(
-            [transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        transform = []
+        if name == 'train':
+            transform += [
+                transforms.RandomResizedCrop(224),
+                transforms.RandomHorizontalFlip(),
+            ]
+        else:
+            transform += [
+                transforms.CenterCrop(224),
+            ]
 
-        batch_size = 1024
+        transform += [
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=IMAGENET_MEAN,
+                std=IMAGENET_STD
+            ),
+        ]
 
-        ds = torchvision.datasets.ImageFolder(os.path.join('/data/clean/cifar10', name), transform=transform)
+        transform = transforms.Compose(transform)
 
-        loaders[name] = torch.utils.data.DataLoader(ds, batch_size=batch_size, shuffle=True, num_workers=8)
+        batch_size = 512
+        num_workers = 8
+        shuffle = True if name == 'train' else False
+
+        ds = torchvision.datasets.ImageFolder(
+            os.path.join(PATH, name),
+            transform=transform,
+        )
+        loaders[name] = torch.utils.data.DataLoader(
+            ds,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            shuffle=shuffle,
+        )
 
     return loaders
-
 
 def train(model, loaders):
     lr = 0.01
@@ -70,14 +105,15 @@ def train(model, loaders):
         accuracy = 100 * correct / total
         print(f"Test Accuracy after epoch {epoch+1}: {accuracy:.2f}%")
 
-if __name__ == "__main__":
+def main():
     s = int(time())
 
     loaders = get_dataloaders()
-    model = RN50(num_classes=10).to(torch.device(DEVICE))
+    model = RN50(num_classes=1000).to(torch.device(DEVICE))
 
     train(model, loaders)
 
     e = int(time())
 
-    print(f'Total Time: {e-s}s')
+if __name__ == "__main__":
+    main()

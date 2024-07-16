@@ -1,68 +1,58 @@
-import torch
+import lightning as L
+from torchmetrics import Accuracy
 
-from ray.train import get_dataset_shard, report
-from ray.train.torch import enable_reproducibility, prepare_model
-from ray.experimental.tqdm_ray import tqdm
+from torch.nn import CrossEntropyLoss
 
-from speeder.utils import *
 from speeder.models import *
+from speeder.utils import *
 
-def train_loop_per_worker(cfg):
-    cfg = DotDict(cfg)
-    set_seeds(0)
-    enable_reproducibility()
+class LightningModel(L.LightningModule):
+    def __init__(self):
+        super().__init__()
+        self.model = ResNet50(num_classes=200).to(memory_format=torch.channels_last)
 
-    model = Net()
-    model = prepare_model(model)
+        self.loss_fn = CrossEntropyLoss()
+        self.train_acc = Accuracy(task="multiclass", num_classes=200)
+        self.val_acc = Accuracy(task="multiclass", num_classes=200)
 
-    loss_fn = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr)
+    def forward(self, X):
+        return self.model(X)
 
-    # Get shard once at the very beginning
-    # Shuffles will be limited to local shard context, but this is okay
-    ds_train = get_dataset_shard('train')
-    ds_val = get_dataset_shard('val')
+    def training_step(self, batch, batch_idx):
+        X, y = batch
+        logits = self.forward(X)
+        loss = self.loss_fn(logits, y)
+        preds = torch.argmax(logits, dim=1)
 
-    loader_cfg = {
-        'local_shuffle_buffer_size': 0,
-        'batch_size': cfg.batch_size // cfg.train_workers,
-        'prefetch_batches': cfg.prefetch_batches
-    }
+        self.train_acc.update(preds, y)
+        self.log('train_loss', loss, sync_dist=True)
+        return loss
+    
+    def on_train_epoch_end(self):
+        acc = self.train_acc.compute()
+        self.log('train_acc', acc, sync_dist=True)
+        self.train_acc.reset()
 
-    train_loader = ds_train.iter_torch_batches(**loader_cfg)
-    val_loader = ds_val.iter_torch_batches(**loader_cfg)
+    def validation_step(self, batch, batch_idx):
+        X, y = batch
+        logits = self.forward(X)
+        loss = self.loss_fn(logits, y)
+        preds = torch.argmax(logits, dim=1)
 
-    for epoch in range(1, cfg.epochs+1):
-        model.train()
-        for batch in tqdm(train_loader, desc=f"Train Epoch {epoch}"):
-            X, y = batch['img'], batch['label']
-            pred = model(X)
-            loss = loss_fn(pred, y)
+        self.val_acc.update(preds, y)
+        self.log('val_loss', loss, sync_dist=True)
 
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+    def on_validation_epoch_end(self):
+        acc = self.val_acc.compute()
+        self.log('val_acc', acc, sync_dist=True)
+        self.val_acc.reset()
 
-        model.eval()
-        test_loss, num_correct, num_total, total_batches = 0, 0, 0, 0
-        with torch.no_grad():
-            for batch in tqdm(val_loader, desc=f"Test Epoch {epoch}"):
-                X, y = batch['img'], batch['label']
-                pred = model(X)
-                loss = loss_fn(pred, y)
-                pr(loss)
-                pr(pred.shape)
-                pr(y.shape)
-                pr('NEXTNEXT')
-                pr(pred.argmax(1))
-                pr(y)
+    def test_step(self, batch, batch_idx):
+        pass
 
-                test_loss += loss.item()
-                num_total += y.shape[0]
-                num_correct += (pred.argmax(1) == y).sum().item()
-                total_batches += 1
+    def predict_step(self, batch, batch_idx):
+        pass
 
-        test_loss /= total_batches
-        accuracy = num_correct / num_total
-
-        report(metrics={"loss": test_loss, "accuracy": accuracy})
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        return optimizer

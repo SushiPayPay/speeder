@@ -1,116 +1,130 @@
-from PIL import Image
-import io
 import os
 
-from torchvision import transforms
-from torchvision.transforms import v2
-import ray
+import torch
+from torchvision import transforms, datasets
 
-from datasets import load_dataset
+from ffcv.fields.decoders import IntDecoder
+from ffcv.loader import Loader, OrderOption
+from ffcv.fields.rgb_image import \
+    CenterCropRGBImageDecoder, \
+    RandomResizedCropRGBImageDecoder
+from ffcv.transforms import \
+    RandomHorizontalFlip, \
+    ToDevice, \
+    ToTensor, \
+    ToTorchImage, \
+    Squeeze, \
+    Convert
 
 from speeder.utils import *
 
-# def get_global_datasets(cfg):
-#     '''Returns train and val ray dataset objects
-#     '''
-    
-#     ray.init(ignore_reinit_error=True, dashboard_host='0.0.0.0')
+IMAGENET_MEAN = [0.485, 0.456, 0.406]
+IMAGENET_STD = [0.229, 0.224, 0.225]
+DEFAULT_CROP_RATIO = 224/256
 
-#     map_cfg = {
-#         'concurrency': cfg.data_workers,
-#         'num_cpus': cfg.cpus_per_data_worker,
-#         'num_gpus': cfg.gpus_per_data_worker,
-#     }
-
-#     ds_name = 'tiny-imagenet'
-#     ds_dir = os.path.join(cfg.data_path, ds_name)
-
-#     transform = transforms.Compose([
-#         v2.Resize(size=(64, 64)),
-#         transforms.ToTensor()
-#     ])
-
-#     def do_transforms(row):
-#         row['image'] = transform(Image.open(io.BytesIO(row['image']['bytes'])).convert('RGB'))
-#         return row
-
-#     ds = load_dataset('zh-plus/tiny-imagenet', cache_dir=ds_dir)
-
-#     ds_train = (
-#         ray.data.from_huggingface(ds['train'])
-#         .map(do_transforms, **map_cfg)
-#         .random_shuffle()
-#     )
-
-#     pr('DS_TRAIN INFO')
-#     pr(ds_train.count())
-#     pr(ds_train.schema())
-
-#     ds_val = (
-#         ray.data.from_huggingface(ds['valid'])
-#         .map(do_transforms, **map_cfg)
-#         .random_shuffle()
-#     )
-
-#     pr(f'DS_VAL INFO:')
-#     pr(ds_val.count())
-#     pr(ds_val.schema())
-
-#     ds = {
-#         'train': ds_train,
-#         'val': ds_val
-#     }
-
-#     return ds
-
-def get_global_datasets(cfg):
-    '''Returns train and val ray dataset objects
-    '''
-    
-    ray.init(ignore_reinit_error=True, dashboard_host='0.0.0.0')
-
-    map_cfg = {
-        'concurrency': cfg.data_workers,
-        'num_cpus': cfg.cpus_per_data_worker,
-        'num_gpus': cfg.gpus_per_data_worker,
+def get_ffcv_datasets(cfg):
+    loaders = {
+        'train': None,
+        'val': None,
+        'test': None,
     }
 
-    ds_name = 'cifar10'
-    ds_dir = os.path.join(cfg.data_path, ds_name)
+    for name in ['train', 'val', 'test']:
+        path = os.path.join(cfg.data_path, cfg.dataset, f'{name}.beton')
 
-    transform = transforms.Compose([
-        transforms.ToTensor()
-    ])
+        if not os.path.exists(path):
+            pr(f'PATH: {path} DOES NOT EXIST. SKIPPING.')
+            continue
 
-    def do_transforms(row):
-        row['img'] = transform(Image.open(io.BytesIO(row['img']['bytes'])).convert('RGB'))
-        return row
+        image_pipeline = []
+        if name == 'train':
+            image_pipeline += [
+                RandomResizedCropRGBImageDecoder((224, 224)),
+                RandomHorizontalFlip(),
+            ]
+        else:
+            image_pipeline += [
+                CenterCropRGBImageDecoder((224, 224), ratio=DEFAULT_CROP_RATIO),
+            ]
 
-    ds = load_dataset('uoft-cs/cifar10', cache_dir=ds_dir)
+        image_pipeline += [
+            ToTensor(),
+            # ToDevice(torch.device(DEVICE), non_blocking=True),
+            ToTorchImage(),
+            Convert(torch.float16),
+            transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
+        ]
 
-    ds_train = (
-        ray.data.from_huggingface(ds['train'])
-        .map(do_transforms, **map_cfg)
-        .random_shuffle()
-    )
+        label_pipeline = [
+            IntDecoder(),
+            ToTensor(),
+            Squeeze(),
+            # ToDevice(torch.device(DEVICE), non_blocking=True),
+        ]
 
-    pr('DS_TRAIN INFO')
-    pr(ds_train.count())
-    pr(ds_train.schema())
+        order = OrderOption.RANDOM if name == 'train' else OrderOption.SEQUENTIAL
 
-    ds_val = (
-        ray.data.from_huggingface(ds['test'])
-        .map(do_transforms, **map_cfg)
-        .random_shuffle()
-    )
+        loaders[name] = Loader(
+            path,
+            batch_size=cfg.batch_size,
+            num_workers=cfg.data_workers,
+            order=order,
+            drop_last=(name == 'train'),
+            pipelines={
+                'image': image_pipeline,
+                'label': label_pipeline
+            },
+            # os_cache=True,
+        )
+        
+    return loaders
 
-    pr(f'DS_VAL INFO:')
-    pr(ds_val.count())
-    pr(ds_val.schema())
-
-    ds = {
-        'train': ds_train,
-        'val': ds_val
+def get_clean_datasets(cfg):
+    loaders = {
+        'train': None,
+        'val': None,
+        'test': None,
     }
 
-    return ds
+    for name in ['train', 'val', 'test']:
+        path = os.path.join(cfg.data_path, cfg.dataset, f'{name}')
+
+        if not os.path.exists(path):
+            pr(f'PATH: {path} DOES NOT EXIST. SKIPPING.')
+            continue
+
+        transform = []
+        if name == 'train':
+            transform += [
+                transforms.RandomResizedCrop(224),
+                transforms.RandomHorizontalFlip(),
+            ]
+        else:
+            transform += [
+                transforms.CenterCrop(224),
+            ]
+
+        transform += [
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=IMAGENET_MEAN,
+                std=IMAGENET_STD
+            ),
+        ]
+
+        transform = transforms.Compose(transform)
+
+        shuffle = True if name == 'train' else False
+
+        ds = datasets.ImageFolder(
+            path,
+            transform=transform,
+        )
+        loaders[name] = torch.utils.data.DataLoader(
+            ds,
+            batch_size=cfg.batch_size,
+            num_workers=cfg.data_workers,
+            shuffle=shuffle,
+        )
+
+    return loaders
